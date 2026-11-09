@@ -1,26 +1,21 @@
 # SupraSumo Design
 
-Skills de Cursor para desenhar landings, interfaces web e telas mobile a partir de referências reais.
+Skills de Cursor para design de interfaces e assets visuais.
 
-As skills consultam quatro galerias públicas:
+1. **Referências** — consulta SceneAI, Land-book, 60fps e Recent para spec ou refactor de landings, web e mobile.
+2. **Assets** — cria ícones, logos, banners e imagens no Canva (MCP) e busca fotos gratuitas livre de direitos (Pexels / Unsplash / Pixabay).
 
-- [SceneAI](https://sceneai.art/)
-- [Land-book](https://land-book.com/)
-- [60fps](https://60fps.design/)
-- [Recent](https://recent.design/)
+## Skills
 
-Escolhem a melhor referência e geram specs consistentes — ou refatoram uma UI que já existe.
+| Skill | Gatilho | O que faz |
+|---|---|---|
+| `suprasumo-design-start` | Comando `/suprasumo-design-start` | Pesquisa referências e grava `spec.md` + `plan.md`. Não implementa. |
+| `suprasumo-design-refact` | Comando `/suprasumo-design-refact` | Refatora UI existente a partir da melhor referência. |
+| `canva-visual-assets` | **Automático** | Ícones, logos, banners e imagens via Canva MCP + fotos stock via imagebank-mcp. |
 
-## Comandos
+A skill de assets **não** usa `disable-model-invocation`: o agente carrega sozinho quando o pedido menciona ícone, logo, banner, hero, foto, ilustração, OG image, etc.
 
-| Comando | O que faz |
-|---|---|
-| `/suprasumo-design-start` | Pesquisa referências, escolhe uma e grava `specs/<slug>/spec.md` + `plan.md`. **Não implementa código.** |
-| `/suprasumo-design-refact` | Lê um site, app ou landing já pronto, escolhe referência e aplica a refatoração no código existente. |
-
-No chat do Cursor, digite `/` e selecione o comando. Em seguida descreva o produto, o público e a superfície (`landing`, `web` ou `mobile`).
-
-Exemplos:
+### Comandos de referência
 
 ```text
 /suprasumo-design-start Landing para um app de finanças pessoais, público jovem, visual limpo
@@ -28,17 +23,24 @@ Exemplos:
 /suprasumo-design-refact Melhorar a home do site atual: hierarquia fraca e tipografia genérica
 ```
 
-## Instalar
+### Exemplos de gatilho automático (Canva / stock)
+
+```text
+Cria um ícone de app para um banco digital, fundo escuro, marca em dourado
+Gera um logo tipográfico para a padaria Sourdough Lab
+Preciso de um banner YouTube 2560×1440 para o lançamento
+Busca uma foto de hero de café artesanal e salva em public/images
+```
+
+## Instalar skills
 
 ### Opção rápida (recomendado)
-
-No projeto onde você quer usar as skills:
 
 ```bash
 npx skills add DanielDxD/suprasumo-design -a cursor
 ```
 
-Para instalar de forma global (todos os projetos neste Mac):
+Global (todos os projetos neste Mac):
 
 ```bash
 npx skills add DanielDxD/suprasumo-design -a cursor -g
@@ -46,29 +48,49 @@ npx skills add DanielDxD/suprasumo-design -a cursor -g
 
 ### Cópia manual
 
-1. Clone o repositório:
-
 ```bash
 git clone https://github.com/DanielDxD/suprasumo-design.git
-```
-
-2. Copie as pastas das skills para o projeto:
-
-```bash
 mkdir -p .cursor/skills
-cp -R suprasumo-design/skills/suprasumo-design-start .cursor/skills/
-cp -R suprasumo-design/skills/suprasumo-design-refact .cursor/skills/
+cp -R suprasumo-design/skills/* .cursor/skills/
 ```
 
-Ou, para valer em todos os projetos:
+Para todos os projetos: copie para `~/.cursor/skills/` em vez de `.cursor/skills/`.
 
-```bash
-mkdir -p ~/.cursor/skills
-cp -R suprasumo-design/skills/suprasumo-design-start ~/.cursor/skills/
-cp -R suprasumo-design/skills/suprasumo-design-refact ~/.cursor/skills/
+## MCP necessários (assets)
+
+### 1. Canva
+
+Use o plugin / MCP oficial do Canva no Cursor (`plugin-canva-canva`). Autentique quando o agente pedir (`mcp_auth`). Sem Canva autenticado, a skill de assets não consegue gerar ícones/logos/banners.
+
+### 2. Fotos free — [imagebank-mcp](https://github.com/romuloquintanilha/imagebank-mcp)
+
+Busca Pexels, Unsplash e Pixabay, baixa e converte para WebP no projeto.
+
+Chaves gratuitas (pelo menos uma):
+
+- [Pexels API](https://www.pexels.com/api/)
+- [Unsplash Developers](https://unsplash.com/developers) (Access Key)
+- [Pixabay API](https://pixabay.com/api/docs/)
+
+Em `~/.cursor/mcp.json` ou `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "image-banks": {
+      "command": "npx",
+      "args": ["-y", "imagebank-mcp"],
+      "env": {
+        "PEXELS_API_KEY": "your_key",
+        "UNSPLASH_ACCESS_KEY": "your_key",
+        "PIXABAY_API_KEY": "your_key"
+      }
+    }
+  }
+}
 ```
 
-3. Reinicie o agente / abra um novo chat no Cursor para o menu `/` listar os comandos.
+Reinicie o Cursor / MCP depois de salvar. Detalhes e alternativa (stocky): [`skills/canva-visual-assets/references/stock-images-mcp.md`](skills/canva-visual-assets/references/stock-images-mcp.md).
 
 ## Estrutura
 
@@ -76,49 +98,42 @@ cp -R suprasumo-design/skills/suprasumo-design-refact ~/.cursor/skills/
 skills/
   suprasumo-design-start/
     SKILL.md
-    references/
-      sources.md          # mapa de URLs e filtros das quatro galerias
+    references/sources.md
   suprasumo-design-refact/
-    SKILL.md              # lê o mapa compartilhado acima
+    SKILL.md
+  canva-visual-assets/
+    SKILL.md
+    references/stock-images-mcp.md
 ```
 
 ## Como funciona
 
-### `/suprasumo-design-start`
+### Referências (`start` / `refact`)
 
 1. Classifica a superfície (landing, web ou mobile).
-2. Abre só as fontes certas, com o termo do assunto.
-3. Compara 3 candidatos públicos e fica com 1 referência.
-4. Grava em `specs/<slug>/`:
-   - `spec.md` — estrutura, tipografia, cor, movimento, assinatura, o que não copiar
-   - `plan.md` — stack, arquivos, ordem e verificação
-5. Para. A implementação fica para um passo seguinte.
-
-### `/suprasumo-design-refact`
-
-1. Lê a UI atual (rotas, componentes, estilos, conteúdo).
-2. Busca referência pelo que a interface faz mal.
-3. Grava `specs/<slug>/refactor.md`.
-4. Aplica a mudança no código existente — sem trocar de stack e sem recriar o produto.
-5. Verifica no browser o fluxo principal.
-
-## Fontes por superfície
+2. Abre as fontes certas (Land-book, SceneAI, 60fps, Recent).
+3. Escolhe 1 referência e grava spec / aplica refactor.
 
 | Superfície | Fontes principais |
 |---|---|
-| Landing | Land-book + SceneAI (Recent desempata gosto) |
+| Landing | Land-book + SceneAI |
 | Interface web | Recent + seções do Land-book |
 | Mobile | 60fps + Interface do Recent |
 
-Detalhes de URL e filtros: [`skills/suprasumo-design-start/references/sources.md`](skills/suprasumo-design-start/references/sources.md).
+### Assets (`canva-visual-assets`)
+
+| Pedido | Ferramenta |
+|---|---|
+| Ícone, logo mark, ilustração, graphic | Canva `generate-image` |
+| Banner / layout editável | Canva `create-design` (on-brand → `generate-design`) |
+| Foto real para hero/seção | imagebank-mcp `search_images` → `download_image` |
 
 ## Regras
 
-- Conteúdo, nome e marca são do pedido. A referência empresta ritmo, escala, contraste, respiro e um gesto de movimento.
-- Não cola headline, screenshot, logo ou asset de terceiro.
-- Usa só o que as galerias mostram em público. Não fura paywall.
-- Uma assinatura visual. O resto fica quieto.
+- Conteúdo e marca são do pedido; referências emprestam ofício, não copy/assets de terceiros.
+- Fotos stock vão para disco do projeto (WebP) — sem hotlink no código final.
+- Respeite termos do Canva e das galerias / providers de stock.
 
 ## Licença
 
-Uso livre neste repositório. Respeite as licenças e termos de SceneAI, Land-book, 60fps e Recent ao consultar as galerias.
+Uso livre neste repositório. Respeite as licenças de SceneAI, Land-book, 60fps, Recent, Canva, Pexels, Unsplash e Pixabay.
